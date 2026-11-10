@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>3D Periodic Table</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#02060a;color:#cfe;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+#stage{position:fixed;inset:0;perspective:1500px;touch-action:none;cursor:grab;overflow:hidden}
+#stage:active{cursor:grabbing}
+#world{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
+.t{position:absolute;width:84px;height:108px;margin:-54px 0 0 -42px;border:1px solid var(--c);border-radius:6px;
+ background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--c) 45%,transparent);
+ backface-visibility:hidden;transition:transform 1.6s cubic-bezier(.3,.7,.2,1);padding:6px 7px;user-select:none}
+.t b{position:absolute;top:5px;right:7px;font:600 11px system-ui;color:var(--c);opacity:.85}
+.t i{position:absolute;left:0;right:0;top:34px;text-align:center;font:700 30px system-ui;font-style:normal;color:#fff;text-shadow:0 0 8px var(--c)}
+.t span{position:absolute;left:0;right:0;bottom:9px;text-align:center;font:11px system-ui;color:var(--c)}
+#bar{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center;z-index:5}
+#bar button{background:rgba(0,20,10,.7);color:#7fffb0;border:1px solid #2fdc7a;border-radius:4px;padding:10px 18px;font:600 13px system-ui;letter-spacing:.08em;cursor:pointer}
+#bar button.on,#bar button:hover{background:#2fdc7a;color:#02140a}
+h1{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:0;right:0;margin:0;text-align:center;font:600 14px system-ui;letter-spacing:.2em;color:#7fffb0;z-index:5;pointer-events:none}
+</style>
+</head>
+<body>
+<h1>PERIODIC TABLE</h1>
+<div id="stage"><div id="world"></div></div>
+<div id="bar"></div>
+<script>
+const S="H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og".split(" ");
+const N="Hydrogen,Helium,Lithium,Beryllium,Boron,Carbon,Nitrogen,Oxygen,Fluorine,Neon,Sodium,Magnesium,Aluminium,Silicon,Phosphorus,Sulfur,Chlorine,Argon,Potassium,Calcium,Scandium,Titanium,Vanadium,Chromium,Manganese,Iron,Cobalt,Nickel,Copper,Zinc,Gallium,Germanium,Arsenic,Selenium,Bromine,Krypton,Rubidium,Strontium,Yttrium,Zirconium,Niobium,Molybdenum,Technetium,Ruthenium,Rhodium,Palladium,Silver,Cadmium,Indium,Tin,Antimony,Tellurium,Iodine,Xenon,Caesium,Barium,Lanthanum,Cerium,Praseodymium,Neodymium,Promethium,Samarium,Europium,Gadolinium,Terbium,Dysprosium,Holmium,Erbium,Thulium,Ytterbium,Lutetium,Hafnium,Tantalum,Tungsten,Rhenium,Osmium,Iridium,Platinum,Gold,Mercury,Thallium,Lead,Bismuth,Polonium,Astatine,Radon,Francium,Radium,Actinium,Thorium,Protactinium,Uranium,Neptunium,Plutonium,Americium,Curium,Berkelium,Californium,Einsteinium,Fermium,Mendelevium,Nobelium,Lawrencium,Rutherfordium,Dubnium,Seaborgium,Bohrium,Hassium,Meitnerium,Darmstadtium,Roentgenium,Copernicium,Nihonium,Flerovium,Moscovium,Livermorium,Tennessine,Oganesson".split(",");
+const T=S.length;
+function pos(n){
+ if(n==1)return[1,1];if(n==2)return[18,1];
+ if(n<=4)return[n-2,2];if(n<=10)return[n+8,2];
+ if(n<=12)return[n-10,3];if(n<=18)return[n,3];
+ if(n<=36)return[n-18,4];if(n<=54)return[n-36,5];
+ if(n<=56)return[n-54,6];if(n<=71)return[n-54,8.6];
+ if(n<=86)return[n-68,6];if(n<=88)return[n-86,7];
+ if(n<=103)return[n-86,9.6];return[n-100,7];
+}
+function color(n){
+ if([2,10,18,36,54,86,118].includes(n))return"#c07bff";
+ if([3,11,19,37,55,87].includes(n))return"#ff5a4a";
+ if([4,12,20,38,56,88].includes(n))return"#ff9a3c";
+ if([9,17,35,53,85,117].includes(n))return"#35d8e8";
+ if([1,6,7,8,15,16,34].includes(n))return"#4dff7a";
+ if([5,14,32,33,51,52,84].includes(n))return"#c8e63c";
+ if(n>=57&&n<=71)return"#ffd23c";
+ if(n>=89&&n<=103)return"#ff6aa8";
+ if((n>=21&&n<=30)||(n>=39&&n<=48)||(n>=72&&n<=80)||(n>=104&&n<=112))return"#3cd0a0";
+ return"#7fb4ff";
+}
+const world=document.getElementById("world"),stage=document.getElementById("stage");
+const els=S.map((s,i)=>{
+ const d=document.createElement("div");d.className="t";d.style.setProperty("--c",color(i+1));
+ d.innerHTML="<b>"+(i+1)+"</b><i>"+s+"</i><span>"+N[i]+"</span>";
+ d.style.transitionDelay=(Math.random()*0.5)+"s";world.appendChild(d);return d;
+});
+const EXT={table:1900,sphere:1500,helix:1600,grid:1800};
+const L={
+ table:i=>{const[c,r]=pos(i+1);return"translate3d("+((c-9.5)*98)+"px,"+((r-5)*122)+"px,0)"},
+ sphere:i=>{
+  const lat=Math.asin(-1+2*(i+.5)/T),lon=Math.sqrt(T*Math.PI)*(Math.asin(-1+2*(i+.5)/T)+Math.PI/2);
+  return"rotateY("+lon+"rad) rotateX("+(-lat)+"rad) translateZ(560px)"},
+ helix:i=>{const th=i*.2+Math.PI;return"translateY("+(-(i*9)+530)+"px) rotateY("+th+"rad) translateZ(620px)"},
+ grid:i=>{const x=i%5,y=Math.floor(i/5)%4,z=Math.floor(i/20);
+  return"translate3d("+((x-2)*190)+"px,"+((1.5-y)*190)+"px,"+((z-2.5)*420)+"px)"}
+};
+let cur="table",rx=0,ry=0,zoom=0,drag=null,auto=false;
+function base(){const p=1500,s=Math.min(1,innerWidth/EXT[cur]);return p-p/s}
+function apply(){world.style.transform="translateZ("+(base()+zoom)+"px) rotateX("+rx+"deg) rotateY("+ry+"deg)"}
+function set(k){
+ cur=k;rx=0;ry=0;zoom=0;auto=(k=="sphere"||k=="helix");
+ els.forEach((e,i)=>e.style.transform=L[k](i));apply();
+ document.querySelectorAll("#bar button").forEach(b=>b.classList.toggle("on",b.dataset.k==k));
+}
+const bar=document.getElementById("bar");
+["table","sphere","helix","grid"].forEach(k=>{
+ const b=document.createElement("button");b.textContent=k.toUpperCase();b.dataset.k=k;b.onclick=()=>set(k);bar.appendChild(b);
+});
+stage.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};stage.setPointerCapture(e.pointerId)});
+stage.addEventListener("pointermove",e=>{
+ if(!drag)return;
+ ry+=(e.clientX-drag.x)*.3;rx-=(e.clientY-drag.y)*.3;rx=Math.max(-80,Math.min(80,rx));
+ drag={x:e.clientX,y:e.clientY};apply();
+});
+const end=()=>{drag=null};
+stage.addEventListener("pointerup",end);stage.addEventListener("pointercancel",end);
+stage.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(-1200,Math.min(900,zoom-e.deltaY));apply()},{passive:false});
+addEventListener("resize",apply);
+(function loop(){if(auto&&!drag){ry+=.12;apply()}requestAnimationFrame(loop)})();
+setTimeout(()=>set("table"),50);
+</script>
+</body>
+</html>
